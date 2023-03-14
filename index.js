@@ -9,7 +9,9 @@ const port = process.env.PORT || 3000;
 
 const Schema = mongoose.Schema;
 
-mongoose.connect(process.env.MONGODB_CONNECTION)
+mongoose.connect(process.env.MONGODB_CONNECTION, {
+    dbName: "assitencia"
+})
 .then(() => {
     console.log("Conexion exitosa");
 });
@@ -48,7 +50,7 @@ const asistencia = new Schema({
 });
 
 const Alumnos = mongoose.model("alumnos", alumno);
-const Asistencia = mongoose.model("asistencia", asistencia);
+const Asistencia = mongoose.model("asistencias", asistencia);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
