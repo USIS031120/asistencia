@@ -3,10 +3,13 @@ const app = express();
 const exceljs = require("exceljs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const dotenv = require("dotenv");
+dotenv.config();
+const port = process.env.PORT || 3000;
 
 const Schema = mongoose.Schema;
 
-mongoose.connect("mongodb://localhost:27017/asistencia")
+mongoose.connect(process.env.MONGODB_CONNECTION)
 .then(() => {
     console.log("Conexion exitosa");
 });
@@ -380,7 +383,7 @@ app.post("/actualizarAsistencia", async (req, res) => {
     res.send();
 });
 
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log("Servidor ejecutandose");
 });
 
