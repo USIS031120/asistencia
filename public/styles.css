@@ -1,0 +1,47 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.container {
+    margin: auto;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.tabla {
+    padding: 20px;
+    border: 0;
+}
+
+.tabla tr td {
+    padding: 20px;
+}
+
+.tabla tr {
+    background: #d3d3d3;
+}
+
+.tabla tr td input {
+    padding: 40px;
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-style: none;
+    border: 1px solid black;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.fecha {
+
+}
+
+.ocultar {
+    display: none;
+}

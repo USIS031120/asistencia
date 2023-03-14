@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <input type="date" class="fecha">
+        <button class="btn btn-fecha">Aceptar</button>
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <td>Nombre</td>
+                    <td class="ocultar">Edad</td>
+                    <td class="ocultar">Genero</td>
+                    <td>Asistencia</td>
+                    <td>Permiso</td>
+                </tr>
+            </thead>
+            <tbody id="alumnos">
+            </tbody>
+        </table>
+
+        <div class="resultados">
+            <table class="tabla">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td>M</td>
+                        <td>F</td>
+                        <td>T</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>4</td>
+                        <td id="cm">0</td>
+                        <td id="cf">0</td>
+                        <td id="ct">0</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td id="cim">0</td>
+                        <td id="cif">0</td>
+                        <td id="cit">0</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td id="sm">0</td>
+                        <td id="sf">0</td>
+                        <td id="st">0</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td id="tm">0</td>
+                        <td id="tf">0</td>
+                        <td id="t">0</td>
+                    </tr>
+                    <tr>
+                        <td>Permisos</td>
+                        <td id="permisos"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn" id="btn">Exportar estudiantes</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
