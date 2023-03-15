@@ -116,8 +116,8 @@ app.post("/estudiantes", async (req, res) => {
 
     if (asistencia.length > 0) {
         asistencia.sort((a, b) => {
-                var textA = a.alumno[0].nombre.toUpperCase();
-                var textB = b.alumno[0].nombre.toUpperCase();
+                var textA = a.alumno[0].nombre.split(" ")[2].toUpperCase();
+                var textB = b.alumno[0].nombre.split(" "[2]).toUpperCase();
                 return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
         });
         res.send(asistencia);
