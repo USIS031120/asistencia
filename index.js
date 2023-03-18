@@ -123,7 +123,7 @@ app.post("/estudiantes", async (req, res) => {
         res.send(asistencia);
     } else {
         let alumnos = await Alumnos.find();
-        alumnos.forEach(async alumno => {
+        await alumnos.forEach(async alumno => {
             await Asistencia.create({
                 idAlumno: alumno._id,
                 Asistencia: false,
@@ -374,12 +374,14 @@ app.post("/exportarEstudiantes", async (req, res) => {
 });
 
 app.post("/actualizarAsistencia", async (req, res) => {
+    console.log(req.body.asistencia);
     console.log(req.body.permiso);
     let alumno = req.body.alumno;
     let estudiante = await Alumnos.find({nombre: alumno});
     let idEstudiante = estudiante[0]._id;
+    let fecha = req.body.fecha;
     console.log(idEstudiante);
-    let update = await Asistencia.updateOne({idAlumno: idEstudiante}, {Permiso: req.body.permiso, Asistencia: req.body.asistencia});
+    let update = await Asistencia.updateOne({idAlumno: idEstudiante, fecha: fecha}, {Permiso: req.body.permiso, Asistencia: req.body.asistencia});
     console.log(update.matchedCount);
     console.log(update.modifiedCount);
     res.send();

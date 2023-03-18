@@ -48,9 +48,10 @@ let comprobar = (e) => {
         let alumno = e.target.parentNode.parentNode.querySelectorAll("td")[0].innerHTML;
         let asistencia = e.target.parentNode.parentNode.querySelectorAll("input")[0].checked;
         let permiso = e.target.parentNode.parentNode.querySelectorAll("input")[1].checked;
+        let fecha = document.querySelector(".fecha").value;
         fetch("/actualizarAsistencia", {
             method: "post",
-            body: JSON.stringify({alumno, asistencia, permiso}),
+            body: JSON.stringify({alumno, asistencia, permiso, fecha}),
             headers: {"Content-Type": "application/json"}
         });
     }
