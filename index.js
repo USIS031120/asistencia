@@ -97,7 +97,6 @@ app.post("/estudiantes", async (req, res) => {
     // res.send(estudiantes);
     let fecha = req.body.fecha;
     console.log(fecha);
-    const alumnos = await Alumnos.find();
 
     let asistencia = await Asistencia.aggregate([
         {
@@ -128,14 +127,16 @@ app.post("/estudiantes", async (req, res) => {
         res.send(asistencia);
     } else {
         let alumnos = await Alumnos.find();
-        await alumnos.forEach(async alumno => {
+        await Promise.all(alumnos.map(async alumno => {
             await Asistencia.create({
                 idAlumno: alumno._id,
                 Asistencia: false,
                 Permiso: false,
                 fecha: fecha
             });
-        });
+        }));
+
+        
         let asistencia = await Asistencia.aggregate([
             {
                 $lookup:
@@ -150,6 +151,16 @@ app.post("/estudiantes", async (req, res) => {
                 $match: {fecha: fecha}
             }
         ]);
+            asistencia.sort((a, b) => {
+                    var textA = a.alumno[0].nombre.split(" ")[2].toUpperCase();
+                    var textB = b.alumno[0].nombre.split(" ")[2].toUpperCase();
+                    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+            });
+            asistencia.sort((a, b) => {
+                var textA = a.alumno[0].edad;
+                var textB = b.alumno[0].edad;
+                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+            })
         res.send(asistencia);
     }
 

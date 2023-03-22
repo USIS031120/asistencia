@@ -176,21 +176,24 @@ btnFecha.addEventListener("click", () => {
     .then(estudiantes => {
         console.log(estudiantes);
         alumnos.innerHTML = "";
+        let contador = 1;
         estudiantes.forEach(estudiante => {
             let checkedAsistencia = "";
-        let checkedPermiso = "";
-        if (estudiante.Asistencia) {
-            checkedAsistencia = "checked"
-        }
-        if (estudiante.Permiso) {
-            checkedPermiso = "checked";
-        }
+            let checkedPermiso = "";
+            if (estudiante.Asistencia) {
+                checkedAsistencia = "checked"
+            }
+            if (estudiante.Permiso) {
+                checkedPermiso = "checked";
+            }
                 alumnos.innerHTML += `
                 <tr>
+                <td>${contador}</td>
                 <td>${estudiante.alumno[0].nombre}</td>
                 <td class="ocultar">${estudiante.alumno[0].edad}</td>
                 <td class="ocultar">${estudiante.alumno[0].genero}</td>
                 <td><input type="checkbox" ${checkedAsistencia}></td><td><input type="checkbox" ${checkedPermiso}></td></tr>`;
+                contador++;
             });
             comprobar();
             document.querySelectorAll("input[type=checkbox]").forEach(elemento => {
