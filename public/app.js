@@ -76,6 +76,7 @@ let comprobar = (e) => {
         let asistencia = estudiante.querySelectorAll("input")[0].checked;
         let permiso = estudiante.querySelectorAll("input")[1].checked;
 
+        
         if (asistencia) {
             if (edad == 4) {
                 total4anios++;
