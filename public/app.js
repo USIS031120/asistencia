@@ -45,7 +45,7 @@ let permisos = 0;
 
 let comprobar = (e) => {
     if (e != undefined) {
-        let alumno = e.target.parentNode.parentNode.querySelectorAll("td")[0].innerHTML;
+        let alumno = e.target.parentNode.parentNode.querySelectorAll("td")[1].innerHTML;
         let asistencia = e.target.parentNode.parentNode.querySelectorAll("input")[0].checked;
         let permiso = e.target.parentNode.parentNode.querySelectorAll("input")[1].checked;
         let fecha = document.querySelector(".fecha").value;
@@ -70,9 +70,9 @@ let comprobar = (e) => {
         total = 0;
         permisos = 0;
     estudiantes.forEach(estudiante => {
-        let nombre = estudiante.querySelectorAll("td")[0].innerHTML;
-        let edad = estudiante.querySelectorAll("td")[1].innerHTML;
-        let genero = estudiante.querySelectorAll("td")[2].innerHTML;
+        let nombre = estudiante.querySelectorAll("td")[1].innerHTML;
+        let edad = estudiante.querySelectorAll("td")[2].innerHTML;
+        let genero = estudiante.querySelectorAll("td")[3].innerHTML;
         let asistencia = estudiante.querySelectorAll("input")[0].checked;
         let permiso = estudiante.querySelectorAll("input")[1].checked;
 
