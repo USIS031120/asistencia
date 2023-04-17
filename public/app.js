@@ -161,18 +161,7 @@ btn.addEventListener("click", () => {
         body: JSON.stringify({fecha: fecha.value})
     })
     .then(res => res.json())
-    .then(res => {
-        let file = res.directorios;
-        fetch("/descargar/"+file+" 4 años.xlsx", {
-            method: "get"
-        }).then(res => {})
-        fetch("/descargar/"+file+" 5 años.xlsx", {
-            method: "get"
-        }).then(res => res)
-        fetch("/descargar/"+file+" 6 años.xlsx", {
-            method: "get"
-        }).then(res => res)
-    })
+    .then(res => console.log(res));
 })
 
 let fecha = document.querySelector(".fecha");
