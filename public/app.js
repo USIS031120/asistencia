@@ -154,13 +154,25 @@ btn.addEventListener("click", () => {
 
         estudiantes.push(alumno);
     });
+    let fecha = document.querySelector("#fecha");
     fetch("/exportarEstudiantes", {
         method: "post",
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(estudiantes)
+        body: JSON.stringify({fecha: fecha.value})
     })
     .then(res => res.json())
-    .then(res => console.log(res))
+    .then(res => {
+        let file = res.directorios;
+        fetch("/descargar/"+file+" 4 años.xlsx", {
+            method: "get"
+        }).then(res => {})
+        fetch("/descargar/"+file+" 5 años.xlsx", {
+            method: "get"
+        }).then(res => res)
+        fetch("/descargar/"+file+" 6 años.xlsx", {
+            method: "get"
+        }).then(res => res)
+    })
 })
 
 let fecha = document.querySelector(".fecha");

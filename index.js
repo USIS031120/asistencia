@@ -168,8 +168,8 @@ app.post("/estudiantes", async (req, res) => {
 });
 
 app.post("/exportarEstudiantes", async (req, res) => {
-    let estudiantes = req.body;
-    console.log(estudiantes);
+    let fechames = req.body;
+    // console.log(fecha);
 
     let asistencia = await Asistencia.aggregate([
         {
@@ -185,7 +185,7 @@ app.post("/exportarEstudiantes", async (req, res) => {
     asistenciaFecha = asistencia.map(alumnos => {
         let fecha = new Date(alumnos.fecha);
 
-        if (fecha.getMonth() + 1 == 3) {
+        if (fecha.getMonth() == fechames.fecha) {
             alumnos.nombre = alumnos.alumno[0].nombre;
             alumnos.edad = alumnos.alumno[0].edad;
             return alumnos;
@@ -223,7 +223,7 @@ app.post("/exportarEstudiantes", async (req, res) => {
                 break;
             case 2:
                 fecha.semana = "M";
-                breack;
+                break;
             case 3:
                 fecha.semana = "M";
                 break;
@@ -378,6 +378,7 @@ app.post("/exportarEstudiantes", async (req, res) => {
                 worksheet.addRow(alumno);
             });
             const data = await workbook.xlsx.writeFile(path + "/estudiantes "+edad+".xlsx");
+            // res.download(path + "/estudiantes "+edad+".xlsx");
         }
 
         await crearExcel(arregloAlumnos4anios, "4 años");
@@ -385,9 +386,15 @@ app.post("/exportarEstudiantes", async (req, res) => {
         await crearExcel(arregloAlumnos6anios, "6 años");
 
     res.send({
-        ok: true
+        ok: true,
+        directorios: "estudiantes"
     });
 });
+
+app.get("/descargar/:nombre", (req, res) => {
+    let nombre = req.params.nombre;
+    res.download("./files/"+nombre+".xlsx");
+})
 
 app.post("/actualizarAsistencia", async (req, res) => {
     console.log(req.body.asistencia);
