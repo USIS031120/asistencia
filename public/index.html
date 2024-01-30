@@ -2,95 +2,177 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 </head>
 <body>
     <div class="container">
-        <input type="date" class="fecha">
-        <button class="btn btn-fecha">Aceptar</button>
-        <table class="tabla">
-            <thead>
-                <tr>
-                    <td>Nº</td>
-                    <td>Nombre</td>
-                    <td class="ocultar">Edad</td>
-                    <td class="ocultar">Genero</td>
-                    <td>Asistencia</td>
-                    <td>Permiso</td>
-                </tr>
-            </thead>
-            <tbody id="alumnos">
-            </tbody>
-        </table>
-
-        <div class="resultados">
-            <table class="tabla">
-                <thead>
-                    <tr>
-                        <td></td>
-                        <td>M</td>
-                        <td>F</td>
-                        <td>T</td>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>4</td>
-                        <td id="cm">0</td>
-                        <td id="cf">0</td>
-                        <td id="ct">0</td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td id="cim">0</td>
-                        <td id="cif">0</td>
-                        <td id="cit">0</td>
-                    </tr>
-                    <tr>
-                        <td>6</td>
-                        <td id="sm">0</td>
-                        <td id="sf">0</td>
-                        <td id="st">0</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td id="tm">0</td>
-                        <td id="tf">0</td>
-                        <td id="t">0</td>
-                    </tr>
-                    <tr>
-                        <td>Permisos</td>
-                        <td id="permisos"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <select id="fecha">
-                <option value="0">Enero</option>
-                <option value="1">Febrero</option>
-                <option value="2">Marzo</option>
-                <option value="3">Abril</option>
-                <option value="4">Mayo</option>
-                <option value="5">Junio</option>
-                <option value="6">Julio</option>
-                <option value="7">Agosto</option>
-                <option value="8">Septiembre</option>
-                <option value="9">Octubre</option>
-                <option value="10">Noviembre</option>
-                <option value="11">Diciembre</option>
-            </select>
-            <button class="btn" id="btn">Exportar estudiantes</button>
+        <div class="alert alert-danger d-none">
+            <p>Selecciona solo dias de semana</p>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <input type="date" id="fecha" class="form-control">
+                <table class="asistencia table table-striped">
+                    <thead>
+                        <tr>
+                            <td>Nombres</td>
+                            <td>Edad</td>
+                            <td>Genero</td>
+                            <td>Asistio</td>
+                            <td>Permiso</td>
+                            <td>Sin permiso</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Alejandro</td>
+                            <td>4</td>
+                            <td>
+                                <input type="checkbox">
+                            </td>
+                            <td>
+                                <input type="checkbox">
+                            </td>
+                            <td>
+                                <input type="checkbox">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <h2 class="text-center">Asistio</h2>
+                <table id="asistencia" class="table">
+                    <thead>
+                        <tr>
+                            <td></td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>6</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>M</td>
+                            <td class="m4">0</td>
+                            <td class="m5">0</td>
+                            <td class="m6">0</td>
+                            <td class="tm">0</td>
+                        </tr>
+                        <tr>
+                            <td>F</td>
+                            <td class="f4">0</td>
+                            <td class="f5">0</td>
+                            <td class="f6">0</td>
+                            <td class="tf">0</td>
+                        </tr>
+                        <tr>
+                            <td>Total</td>
+                            <td class="t4">0</td>
+                            <td class="t5">0</td>
+                            <td class="t6">0</td>
+                            <td class="tt">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <h2 class="text-center">Permiso</h2>
+                <table id="permiso" class="table">
+                    <thead>
+                        <tr>
+                            <td></td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>6</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>M</td>
+                            <td class="m4">0</td>
+                            <td class="m5">0</td>
+                            <td class="m6">0</td>
+                            <td class="tm">0</td>
+                        </tr>
+                        <tr>
+                            <td>F</td>
+                            <td class="f4">0</td>
+                            <td class="f5">0</td>
+                            <td class="f6">0</td>
+                            <td class="tf">0</td>
+                        </tr>
+                        <tr>
+                            <td>Total</td>
+                            <td class="t4">0</td>
+                            <td class="t5">0</td>
+                            <td class="t6">0</td>
+                            <td class="tt">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <h2 class="text-center">Sin permiso</h2>
+                <table id="sinpermiso" class="table">
+                    <thead>
+                        <tr>
+                            <td></td>
+                            <td>4</td>
+                            <td>5</td>
+                            <td>6</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>M</td>
+                            <td class="m4">0</td>
+                            <td class="m5">0</td>
+                            <td class="m6">0</td>
+                            <td class="tm">0</td>
+                        </tr>
+                        <tr>
+                            <td>F</td>
+                            <td class="f4">0</td>
+                            <td class="f5">0</td>
+                            <td class="f6">0</td>
+                            <td class="tf">0</td>
+                        </tr>
+                        <tr>
+                            <td>Total</td>
+                            <td class="t4">0</td>
+                            <td class="t5">0</td>
+                            <td class="t6">0</td>
+                            <td class="tt">0</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-12">
+                <button class="btn btn-primary guardar">Guardar asistencia</button>
+                <button class="btn btn-primary exportar">Exportar</button>
+                <select id="mes2" class="">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
         </div>
     </div>
-
-    <script src="app.js"></script>
-    <a href="/descargar/estudiantes 4 años">Descargar estudiantes 4 años</a>
-    <a href="/descargar/estudiantes 5 años">Descargar estudiantes 5 años</a>
-    <a href="/descargar/estudiantes 6 años">Descargar estudiantes 6 años</a>
+    <script src="./app.js"></script>
 </body>
 </html>

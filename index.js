@@ -2,92 +2,27 @@ const express = require("express");
 const app = express();
 const exceljs = require("exceljs");
 const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
 const dotenv = require("dotenv");
+const mysql = require("mysql");
+const util = require("util");
 dotenv.config();
 const port = process.env.PORT || 3000;
 
-const Schema = mongoose.Schema;
+const connection = mysql.createConnection({
+    host     : 'localhost',
+    user     : 'root',
+    password : '',
+    database : 'asistencia'
+  });
 
-mongoose.connect(process.env.MONGODB_CONNECTION, {
-    dbName: "assitencia"
-})
-.then(() => {
-    console.log("Conexion exitosa");
-});
+connection.connect();
 
-const alumno = new Schema({
-    _id: {
-        type: Schema.Types.ObjectId
-    },
-    nombre: {
-        type: String
-    },
-    edad: {
-        type: Number
-    },
-    genero: {
-        type: String
-    }
-});
-
-const asistencia = new Schema({
-    idAlumno: {
-        type: Schema.Types.ObjectId
-    },
-    Asistencia: {
-        type: Boolean
-    },
-    Permiso: {
-        type: Boolean
-    },
-    fecha: {
-        type: String
-    }
-},
-{
-    versionKey: false
-});
-
-const Alumnos = mongoose.model("alumnos", alumno);
-const Asistencia = mongoose.model("asistencias", asistencia);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-
-const estudiantes = [
-    {
-        nombre: "Alex",
-        edad: 4,
-        genero: "M"
-    },
-    {
-        nombre: "Carlos",
-        edad: 4,
-        genero: "M"
-    },
-    {
-        nombre: "Jose",
-        edad: 4,
-        genero: "M"
-    },
-    {
-        nombre: "Pedro",
-        edad: 6,
-        genero: "M"
-    },
-    {
-        nombre: "Josue",
-        edad: 5,
-        genero: "M"
-    },
-    {
-        nombre: "Daniela",
-        edad: 4,
-        genero: "F"
-    }
-];
 app.use(express.static(__dirname + "/public"));
+
+let query = util.promisify(connection.query).bind(connection);
 
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/public/index.html");
@@ -98,298 +33,610 @@ app.post("/estudiantes", async (req, res) => {
     let fecha = req.body.fecha;
     console.log(fecha);
 
-    let asistencia = await Asistencia.aggregate([
-        {
-            $lookup:
-            {
-                from: "alumnos",
-                localField: "idAlumno",
-                foreignField: "_id",
-                as: "alumno"
-            }
-        },
-        {
-            $match: {fecha: fecha}
-        }
-    ]);
-
-    if (asistencia.length > 0) {
-        asistencia.sort((a, b) => {
-                var textA = a.alumno[0].nombre.split(" ")[2].toUpperCase();
-                var textB = b.alumno[0].nombre.split(" ")[2].toUpperCase();
-                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-        });
-        asistencia.sort((a, b) => {
-            var textA = a.alumno[0].edad;
-            var textB = b.alumno[0].edad;
-            return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
+    let result = await query("select * from asistencia where fecha = ?", [fecha])
+    if (result.length == 0) {
+        let result = await query("select * from estudiantes")
+                    
+        await result.forEach(async estudiante => {
+            await query("insert into asistencia values (null, ?, ?, 'SP')", [estudiante.id, fecha]);
         })
-        res.send(asistencia);
+        result = await query("select estudiantes.nombres, estudiantes.apellidos, estudiantes.edad, estudiantes.genero, asistencia.id, asistencia.asistencia from asistencia inner join estudiantes on asistencia.idalumno = estudiantes.id where asistencia.fecha = ? order by estudiantes.edad, estudiantes.apellidos", [fecha])
+        res.send({result})
+            
     } else {
-        let alumnos = await Alumnos.find();
-        await Promise.all(alumnos.map(async alumno => {
-            await Asistencia.create({
-                idAlumno: alumno._id,
-                Asistencia: false,
-                Permiso: false,
-                fecha: fecha
-            });
-        }));
-
-        
-        let asistencia = await Asistencia.aggregate([
-            {
-                $lookup:
-                {
-                    from: "alumnos",
-                    localField: "idAlumno",
-                    foreignField: "_id",
-                    as: "alumno"
-                }
-            },
-            {
-                $match: {fecha: fecha}
-            }
-        ]);
-            asistencia.sort((a, b) => {
-                    var textA = a.alumno[0].nombre.split(" ")[2].toUpperCase();
-                    var textB = b.alumno[0].nombre.split(" ")[2].toUpperCase();
-                    return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-            });
-            asistencia.sort((a, b) => {
-                var textA = a.alumno[0].edad;
-                var textB = b.alumno[0].edad;
-                return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;
-            })
-        res.send(asistencia);
+        let result = await query("select estudiantes.nombres, estudiantes.apellidos, estudiantes.edad, estudiantes.genero, asistencia.id, asistencia.asistencia from asistencia inner join estudiantes on asistencia.idalumno = estudiantes.id where asistencia.fecha = ? order by estudiantes.edad, estudiantes.apellidos", [fecha])
+        res.send({result})
     }
 
-    // req.send(data);
 });
 
 app.post("/exportarEstudiantes", async (req, res) => {
-    let fechames = req.body;
-    // console.log(fecha);
 
-    let asistencia = await Asistencia.aggregate([
-        {
-            $lookup: {
-                from: "alumnos",
-                localField: "idAlumno",
-                foreignField: "_id",
-                as: "alumno"
-            }
-        }
-    ]);
-    let asistenciaFecha = [];
-    asistenciaFecha = asistencia.map(alumnos => {
-        let fecha = new Date(alumnos.fecha);
-
-        if (fecha.getMonth() == fechames.fecha) {
-            alumnos.nombre = alumnos.alumno[0].nombre;
-            alumnos.edad = alumnos.alumno[0].edad;
-            return alumnos;
-        }
-    });
-
-    asistenciaFecha = asistenciaFecha.filter(asistencia => {
-        if (asistencia !== undefined) {
-            return asistencia;
-        }
-    });
-
-    console.log(asistenciaFecha);
-
-    let fechas = asistenciaFecha.sort((a, b) => {
-        let fecha1 = a.fecha;
-        let fecha2 = b.fecha;
-        if (fecha1 > fecha2) {
-            return 1;
-        } else if (fecha2 > fecha1) {
-            return -1;
-        } else {
-            return 0;
-        }
-    });
-
-    console.log(fechas);
-
-    fechas = fechas.map(fecha => {
-        let date = new Date(fecha.fecha);
-        let semana = date.getDay() + 1;
-        switch(semana) {
-            case 1:
-                fecha.semana = "L";
-                break;
-            case 2:
-                fecha.semana = "M";
-                break;
-            case 3:
-                fecha.semana = "M";
-                break;
-            case 4:
-                fecha.semana = "J";
-                break;
-            case 5:
-                fecha.semana = "V";
-                break;
-        }
-        return fecha;
-    });
-
-    console.log(fechas);
-
-    // console.log(asistenciaFecha);
-    let semanas = [];
-
-    fechas.forEach(fecha => {
-        let dia = fecha.fecha;
-        if (semanas.includes(dia) == false) {
-            semanas.push(dia);
-        }
-    });
-
-    let dias = [];
-
-    semanas = semanas.map(semana => {
-        let dia = new Date(semana).getDay() + 1;
-        let date = new Date(semana).getDate() + 1;
-        dias.push(date);
-        switch(dia) {
-            case 1:
-                return "L";
-            case 2:
-                return "M";
-            case 3:
-                return "M";
-            case 4:
-                return "J";
-            case 5:
-                return "V";
-        }
-    });
-
-    let alumnos4anios = [];
-    let alumnos5anios = [];
-    let alumnos6anios = [];
-
-    alumnos4anios = fechas.filter(semana => {
-        if (semana.edad == 4) {
-            return semana;
-        }
-    });
-
-    alumnos5anios = fechas.filter(semana => {
-        if (semana.edad == 5) {
-            return semana;
-        }
-    });
-
-    alumnos6anios = fechas.filter(semana => {
-        if (semana.edad == 6) {
-            return semana;
-        }
-    });
+    let mes = req.body.mes;
     
-    const alumnos4anios1 = [];
+    let workbook = new exceljs.Workbook();
+    let exportarexcel = async (edad) => {
 
-    alumnos4anios.forEach((fecha) => {
-    if (!alumnos4anios1[fecha.nombre]) {
-        alumnos4anios1[fecha.nombre] = [fecha.nombre];
-    }
+    // Consulta para obtener los nombres de los estudiantes y la asistencia
+    let query1 = "SELECT estudiantes.nombres, estudiantes.genero, estudiantes.apellidos, estudiantes.edad, asistencia.fecha, asistencia.asistencia FROM estudiantes JOIN asistencia ON estudiantes.id = asistencia.idAlumno WHERE MONTH(asistencia.fecha) = ? AND estudiantes.edad = ? ORDER BY estudiantes.apellidos ASC";
+    
+    // Crear nuevo libro de Excel y hoja de trabajo
+    console.log(mes);
+    let worksheet4Years = workbook.addWorksheet(edad.toString() + ' años');
+    // ... Agrega más hojas según sea necesario
+    
+    let results = await query(query1, [mes, edad]); // Ejemplo para octubre
+      // Procesa los resultados aquí y completa la hoja de Excel según sea necesario.
+      // Esto es solo básico; es posible que debas ajustar según tus requisitos exactos.
+      
+      results.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+      let fechas = [];
+      let semanas = [];
+      fechas = results.map(asistencia => {
+        return new Date(asistencia.fecha).getDate();
+      })
+      let fechas2 = results.map(asistencia => {
+        return asistencia.fecha
+      })
+      console.log(semanas)
+      fechas = fechas.filter((item, index)=> {
+        return fechas.indexOf(item) == index;
+      })
+      fechas2 = fechas2.filter((item, index)=> {
+        return fechas2.indexOf(item) == index;
+      })
+      console.log(results);
 
-    let asistencia = "";
-    if (fecha.Asistencia) {
-        asistencia = ".";
-    } else if (fecha.Permiso) {
-        asistencia = "P";
-    } else {
-        asistencia = "SP";
-    }
-    alumnos4anios1[fecha.nombre].push(asistencia);
-        });
-
-    const arregloAlumnos4anios = Object.values(alumnos4anios1);
-    console.log(arregloAlumnos4anios);
-
-    const alumnos5anios1 = [];
-
-    alumnos5anios.forEach((fecha) => {
-    if (!alumnos5anios1[fecha.nombre]) {
-        alumnos5anios1[fecha.nombre] = [fecha.nombre];
-    }
-
-    let asistencia = "";
-    if (fecha.Asistencia) {
-        asistencia = ".";
-    } else if (fecha.Permiso) {
-        asistencia = "P";
-    } else {
-        asistencia = "SP";
-    }
-    alumnos5anios1[fecha.nombre].push(asistencia);
-        });
-        
-    const arregloAlumnos5anios = Object.values(alumnos5anios1);
-    console.log(arregloAlumnos5anios);
-
-    const alumnos6anios1 = [];
-
-    alumnos6anios.forEach((fecha) => {
-    if (!alumnos6anios1[fecha.nombre]) {
-        alumnos6anios1[fecha.nombre] = [fecha.nombre];
-    }
-
-    let asistencia = "";
-    if (fecha.Asistencia) {
-        asistencia = ".";
-    } else if (fecha.Permiso) {
-        asistencia = "P";
-    } else {
-        asistencia = "SP";
-    }
-    alumnos6anios1[fecha.nombre].push(asistencia);
-        });
-        
-    const arregloAlumnos6anios = Object.values(alumnos6anios1);
-    console.log(arregloAlumnos6anios);
-    // console.log(semanas);
-    // console.log(dias);
-        let crearExcel = async(alumnos, edad) => {
-            const workbook = new exceljs.Workbook();
-            const worksheet = workbook.addWorksheet("Estudiantes");
-            const path = "./files";
-        
-            worksheet.columns = [
-                {header: "Nombres", key: "nombre", width: 30}
-            ];
-            let contador = 1;
-            dias.forEach(dia => {
-                contador++;
-                worksheet.spliceColumns(contador, 0, [dia]);
-            });
-        
-            worksheet.getColumn(2).width = 4;
-            worksheet.getColumn(2).alignment = {horizontal: "center"};
-            worksheet.getColumn(3).width = 4;
-            worksheet.getColumn(3).alignment = {horizontal: "center"};
-        
-            alumnos.forEach(alumno => {
-                worksheet.addRow(alumno);
-            });
-            const data = await workbook.xlsx.writeFile(path + "/estudiantes "+edad+".xlsx");
-            // res.download(path + "/estudiantes "+edad+".xlsx");
+      console.log(fechas2);
+      fechas2.forEach((item, index) => {
+        let s = new Date(item).getDay();
+        console.log(s)
+        let w = "";
+        switch(s){
+          case 1:
+            w = "L";
+            break;
+          case 2:
+            w = "M";
+            break;
+          case 3:
+            w = "M";
+            break;
+          case 4:
+            w = "J";
+            break;
+          case 5:
+            w = "V";
+            break;
         }
+        semanas.push(w);
+      })
 
-        await crearExcel(arregloAlumnos4anios, "4 años");
-        await crearExcel(arregloAlumnos5anios, "5 años");
-        await crearExcel(arregloAlumnos6anios, "6 años");
+      let nombres = "";
+      let estudiantes = [];
+      let contador = -1;
+      const asistenciaAgrupada = {};
 
-    res.send({
-        ok: true,
-        directorios: "estudiantes"
-    });
-});
+      // Iterar sobre el array original
+      results.forEach(asistencia => {
+
+        const { nombres, apellidos, asistencia: estadoAsistencia, fecha } = asistencia;
+      
+        // Comprobar si el estudiante ya tiene un objeto en el nuevo objeto
+        if (!asistenciaAgrupada[nombres]) {
+          // Si no existe, crear un nuevo objeto con el nombre del estudiante
+          asistenciaAgrupada[nombres] = [
+            nombres + " " + apellidos,
+            asistencia.genero
+          ];
+        }
+    
+
+        asistenciaAgrupada[nombres].push(estadoAsistencia);
+      });
+
+
+      
+      let totalgenerom = 0;
+      let totalgenerof = 0;
+      const asistenciaAgrupadaArray = Object.values(asistenciaAgrupada);
+      
+      let total = [];
+      let totaldiaasistencia = [];
+      let totaldiapermiso = [];
+      let totaldiasinpermiso = [];
+      asistenciaAgrupadaArray.forEach((asistencia, index) => {
+        let suma = 0;
+        let sumadiariaasistencia = 0;
+        asistencia.forEach((alumno, numero) => {
+          if (numero != 0 && alumno == ".") {
+            suma++;
+          }
+          if (numero != 0){ 
+            if (totaldiaasistencia[numero - 1] == undefined) {
+              totaldiaasistencia[numero - 1] = 0;
+            }
+            if (totaldiapermiso[numero - 1] == undefined) {
+              totaldiapermiso[numero - 1] = 0;
+            }
+            if (totaldiasinpermiso[numero - 1] == undefined) {
+              totaldiasinpermiso[numero - 1] = 0;
+            }
+            if (alumno == "." ) {
+              totaldiaasistencia[numero - 1] += 1;
+
+            }
+            if (alumno == "P") {
+              totaldiapermiso[numero - 1] += 1; 
+            }
+            if (alumno == "SP") {
+              totaldiasinpermiso[numero - 1] += 1; 
+            }
+          }
+          
+          let total1 = []
+        })
+        if (asistencia[1] == "M") {
+          total.push([suma, ""]);
+          totalgenerom += suma;
+        } else {
+          total.push(["", suma]);
+          totalgenerof += suma;
+        }
+        asistencia.splice(1,1);
+      })
+      console.log(asistenciaAgrupadaArray);
+      console.log(estudiantes);
+    
+
+      let totalmatricula1 = [];
+      totaldiaasistencia.splice(0,1);
+      totaldiapermiso.splice(0,1);
+      totaldiasinpermiso.splice(0,1);
+
+      totaldiaasistencia.forEach((asistencia2, index) => {
+        if (totalmatricula1[index] == undefined) {
+          totalmatricula1[index] = 0;
+        }
+        totalmatricula1[index] = totaldiaasistencia[index] + totaldiapermiso[index] + totaldiasinpermiso[index];
+      })
+      
+      let totalasistencia2 = 0;
+      let totalpermiso = 0;
+      let totalsinpermiso = 0;
+      console.log(totaldiaasistencia);
+
+      totaldiaasistencia.forEach(asistencia1 => {
+        totalasistencia2+=asistencia1;
+      });
+
+      totaldiapermiso.forEach(asistencia1 => {
+        totalpermiso+=asistencia1;
+      });
+
+      totaldiasinpermiso.forEach(asistencia1 => {
+        totalsinpermiso+=asistencia1;
+      });
+
+      let totaldias2 = totalasistencia2 + totalpermiso + totalsinpermiso;
+      
+      let mediaAsistenciaM = 0;
+      let mediaAsistenciaF = 0;
+
+      let totaldias = fechas.length;
+
+
+
+      mediaAsistenciaM = Math.round(totalgenerom / totaldias);
+      mediaAsistenciaF = Math.round(totalgenerof / totaldias);
+
+      let totalasitenciam = 0;
+      let alumnos1 = [];
+      let totalmasculino = await query("select count(id) from estudiantes where genero = 'M'");
+      let totalfemenino = await query("select count(id) from estudiantes where genero = 'F'");
+
+      totalmasculino = totalmasculino[0]["count(id)"];
+      totalfemenino = totalfemenino[0]["count(id)"];
+
+      let totalmasculinoporasistencia = totalmasculino * totaldias;
+      let totalfemeninoporasistencia = totalfemenino * totaldias
+      let inasistenciam = Math.round((totalmasculinoporasistencia - totalgenerom) / totaldias);
+      let inasistenciaf = Math.round((totalfemeninoporasistencia - totalgenerof) / totaldias);
+      
+      console.log(total);
+      worksheet4Years.columns = [
+        {header: "N°", width: 4, style: {font: {size: 13}}},
+        {header: "Estudiantes", width: 30, style: {font: {size: 13}}}
+      ]
+      let contador3 = 0;
+      let contador2 = 0;
+
+      fechas.forEach((fecha, numero) => {
+        worksheet4Years.getCell(`2`,`${numero + 3}`).value = fecha;
+        worksheet4Years.getColumn(numero + 3).alignment = {horizontal: "center", vertical: "middle"}
+        worksheet4Years.getColumn(numero + 3).width = 4;
+        worksheet4Years.getColumn(numero + 3).font = {name: "Calibri", size: 13};
+        worksheet4Years.getCell(`2`,`${numero + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+      })
+
+      
+      semanas.forEach((semana, numero) => {
+        worksheet4Years.getCell(`1`, `${numero + 3}`).value = semana;
+        contador2++;
+        worksheet4Years.getCell(`1`,`${numero + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+          
+        }
+      })
+      worksheet4Years.getCell(`A2`).merge(worksheet4Years.getCell("A1"));
+      worksheet4Years.getCell(`B2`).merge(worksheet4Years.getCell("B1"));
+      total.forEach((asistencia, index) => {
+        asistencia.forEach((total2, numero) => {
+          worksheet4Years.getCell(index + 3,`${contador2 + 3 + numero}`).value = total2;
+          worksheet4Years.getCell(index + 3,`${contador2 + 3 + numero}`).border = {
+            top: {style: "thin"},
+            left: {style: "thin"},
+            right: {style: "thin"},
+            bottom: {style: "thin"}
+            
+          }
+        })
+      })
+      worksheet4Years.getCell(`2`, `${contador2 + 3}`).value = "M";
+      worksheet4Years.getCell(`2`,`${contador2 + 3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+        
+      }
+      worksheet4Years.getColumn(contador2 + 3).font = {size: 13};
+      worksheet4Years.getCell(`2`, `${contador2 + 4}`).value = "F";
+      worksheet4Years.getCell(`2`,`${contador2 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+        
+      }
+      worksheet4Years.getColumn(contador2 + 3).width = 4;
+      worksheet4Years.getColumn(contador2 + 4).width = 4;
+      worksheet4Years.getColumn(contador2 + 4).font = {size: 13};
+      worksheet4Years.getCell(`1`, `${contador2 + 3}`).value = "Total";
+      worksheet4Years.getCell(`1`,`${contador2 + 3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+        
+      }
+      worksheet4Years.getCell(`1`, `${contador2 + 4}`).merge(worksheet4Years.getCell(`1`,`${contador2 + 3}`));
+      asistenciaAgrupadaArray.forEach((row, index) => {
+        contador3++;
+        worksheet4Years.getCell(`A${index + 3}`).value = index + 1;
+        worksheet4Years.getCell(`A${index + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+        row.forEach((estudiante, numero) => {
+          worksheet4Years.getCell(`${index + 3}`,`${numero + 2}`).value = estudiante;
+          worksheet4Years.getCell(`${index + 3}`,`${numero + 2}`).border = {
+            top: {style: "thin"},
+            left: {style: "thin"},
+            right: {style: "thin"},
+            bottom: {style: "thin"}
+            
+          }
+        });
+      });
+      worksheet4Years.getCell("A1:O7").border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+
+      }
+      worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + 3}`).value = totalgenerom;
+      worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + 4}`).value = totalgenerof;
+      worksheet4Years.getCell(`${contador3 + 3}`,`${contador2 + 3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 3}`,`${contador2 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      // worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + -2}`).merge(worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + 2}`))
+      // worksheet4Years.mergeCells(contador3 + 3, contador2 - 4, contador3 + 3, contador2 + 2);
+      worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + 2}`).value = "Total asistencia mensual por genero";
+      worksheet4Years.getCell(`${contador3 + 3}`, `${contador2 + 2}`).alignment = {vertical: "bottom", horizontal: "right"}
+      worksheet4Years.getCell(`${contador3 + 3}`,`${contador2 + 2}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+        
+      }
+      contador3 += 2;
+      
+      worksheet4Years.mergeCells("A" + (contador3 + 3) + ":A" + (contador3 + 7));
+      worksheet4Years.getCell(`A${contador3 + 3}`).font = {bold: true}
+      worksheet4Years.getCell(`A${contador3 + 3}`).alignment = {textRotation: "vertical", wrapText: true}
+      worksheet4Years.getCell(`A${contador3 + 3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`B${contador3 + 3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`B${contador3 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`B${contador3 + 5}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`B${contador3 + 6}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`A${contador3 + 3}`).value = "RESUMEN DIARIO";
+      worksheet4Years.getCell(`B${contador3 + 3}`).value = "PRESENTES";
+      worksheet4Years.getCell(`B${contador3 + 4}`).value = "INASISTENTES CON PERMISO";
+      worksheet4Years.getCell(`B${contador3 + 5}`).value = "INASISTENTES SIN PERMISO";
+      worksheet4Years.getCell(`B${contador3 + 6}`).value = "MATRICULA EFECTIVA";
+
+
+
+      totaldiaasistencia.forEach((total1, index) => {
+        if (total1 == 0) {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = ""; 
+        } else {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = total1;
+        }
+        worksheet4Years.getCell(`${contador3 + 3}`, `${index + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+      });
+
+      worksheet4Years.getCell(`${contador3 + 3}`,`${contador2 + 4}`).value = totalasistencia2;
+      worksheet4Years.getCell(`${contador3 + 4}`,`${contador2 + 4}`).value = totalpermiso;
+      worksheet4Years.getCell(`${contador3 + 5}`,`${contador2 + 4}`).value = totalsinpermiso;
+      worksheet4Years.getCell(`${contador3 + 6}`,`${contador2 + 4}`).value = totaldias2;
+      
+      contador3++;
+      totaldiapermiso.forEach((total1, index) => {
+        if (total1 == 0) {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = "";
+        } else {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = total1;
+        }
+        worksheet4Years.getCell(`${contador3 + 3}`, `${index + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+      });
+      contador3++;
+      totaldiasinpermiso.forEach((total1, index) => {
+        if (total1 == 0) {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = "";  
+        } else {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = total1;
+        }
+        worksheet4Years.getCell(`${contador3 + 3}`, `${index + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+      });
+      contador3++;
+      totalmatricula1.forEach((total1, index) => {
+        if (total1 == 0) {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = "";
+        } else {
+          worksheet4Years.getCell(`${contador3 + 3}`,`${index + 3}`).value = total1;
+        }
+        worksheet4Years.getCell(`${contador3 + 3}`, `${index + 3}`).border = {
+          top: {style: "thin"},
+          left: {style: "thin"},
+          right: {style: "thin"},
+          bottom: {style: "thin"}
+        }
+      });
+
+      worksheet4Years.getCell(`${contador3 + 4}`,`2`).value = "ASISTENCIA MENSUAL MEDIA M " + mediaAsistenciaM + " F " + mediaAsistenciaF; 
+      worksheet4Years.getCell(`${contador3 + 4}`, `2`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      } 
+      let totalmatricula = totalmatricula1.length;
+      let tamano1 = Math.round(totalmatricula * 0.25);
+      let tamano2 = Math.round(totalmatricula1 * 0.72);
+      worksheet4Years.mergeCells(`${contador3 + 4}`,`2`, contador3 + 4, 4); 
+      contador3++;
+      worksheet4Years.getCell(`${contador3 + 4}`,`${ 2}`).value = "INASISTENCIA MENSUAL MEDIA M " + inasistenciam + " F " + inasistenciaf; 
+      worksheet4Years.getCell(`${contador3 + 4}`, `${2}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      } 
+      // worksheet4Years.mergeCells(`${contador3 + 4}`, contador2 + 4 - tamano2, contador3 + 4, `${contador2 + 4}`);  
+      
+      let contador4 = 3;
+      worksheet4Years.getCell(`${contador3 + 6}`,`${3}`).value = "INDICADOR";  
+      worksheet4Years.getCell(`${contador3 + 6}`,`${6}`).merge(worksheet4Years.getCell(`${contador3 + 6}`,`${3}`));
+      worksheet4Years.getCell(`${contador3 + 6}`, `${3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+
+      worksheet4Years.getCell(`${contador3 + 6}`,`${contador4 + 4}`).value = "M";
+      worksheet4Years.getCell(`${contador3 + 6}`, `${contador4 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 6}`,`${contador4 + 5}`).value = "F";
+      worksheet4Years.getCell(`${contador3 + 6}`, `${contador4 + 5}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 6}`,`${contador4 + 6}`).value = "T";  
+      worksheet4Years.getCell(`${contador3 + 6}`, `${contador4 + 6}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 7}`,`${3}`).value = "ASISTENCIA";  
+      worksheet4Years.getCell(`${contador3 + 7}`, `${3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 7}`,`${6}`).merge(worksheet4Years.getCell(`${contador3 + 7}`,`${3}`));
+      worksheet4Years.getCell(`${contador3 + 7}`,`${contador4 + 4}`).value = mediaAsistenciaM;
+      worksheet4Years.getCell(`${contador3 + 7}`, `${contador4 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 7}`,`${contador4 + 5}`).value = mediaAsistenciaF;
+      worksheet4Years.getCell(`${contador3 + 7}`, `${contador4 + 5}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 7}`,`${contador4 + 6}`).value = mediaAsistenciaM + mediaAsistenciaF;  
+      worksheet4Years.getCell(`${contador3 + 7}`, `${contador4 + 6}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 8}`,`${3}`).value = "INASISTENCIA";
+      worksheet4Years.getCell(`${contador3 + 8}`,`${6}`).merge(worksheet4Years.getCell(`${contador3 + 8}`,`${3}`));
+      worksheet4Years.getCell(`${contador3 + 8}`, `${3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 8}`,`${contador4 + 4}`).value = inasistenciam;
+      worksheet4Years.getCell(`${contador3 + 8}`, `${contador4 + 4}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 8}`,`${contador4 + 5}`).value = inasistenciaf;
+      worksheet4Years.getCell(`${contador3 + 8}`, `${contador4 + 5}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 8}`,`${contador4 + 6}`).value = inasistenciam + inasistenciaf;  
+      worksheet4Years.getCell(`${contador3 + 8}`, `${contador4 + 6}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 9}`,`${3}`).value = "EGRESADOS";    
+      worksheet4Years.getCell(`${contador3 + 9}`, `${3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 9}`,`${6}`).merge(worksheet4Years.getCell(`${contador3 + 9}`,`${3}`));
+      worksheet4Years.getCell(`${contador3 + 9}`, `${6}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 10}`,`${3}`).value = "INGRESOS";  
+      worksheet4Years.getCell(`${contador3 + 10}`, `${3}`).border = {
+        top: {style: "thin"},
+        left: {style: "thin"},
+        right: {style: "thin"},
+        bottom: {style: "thin"}
+      }
+      worksheet4Years.getCell(`${contador3 + 10}`,`${6}`).merge(worksheet4Years.getCell(`${contador3 + 10}`,`${3}`));
+      
+      
+      
+
+    //     switch(row.asistencia){
+    //       case ".": estado="."; break;
+    //       case "p": estado="P"; break;
+    //       default: estado="SP";
+    //     }
+        
+    //     worksheet4Years.getCell(`${index +2}`, colNumber).value=estado;
+    //    });
+    
+    
+  }
+  
+  await exportarexcel(4);
+  await exportarexcel(5);
+  await exportarexcel(6);
+  workbook.xlsx.writeFile(`asistencia ${mes}.xlsx`);
+       // await crearExcel(arregloAlumnos4anios, "4 años");
+       // await crearExcel(arregloAlumnos5anios, "5 años");
+       // await crearExcel(arregloAlumnos6anios, "6 años");
+       
+       res.send({
+         ok: true,
+         directorios: "estudiantes"
+        });
+      });
 
 app.get("/descargar/:nombre", (req, res) => {
     let nombre = req.params.nombre;
@@ -397,17 +644,24 @@ app.get("/descargar/:nombre", (req, res) => {
 })
 
 app.post("/actualizarAsistencia", async (req, res) => {
-    console.log(req.body.asistencia);
-    console.log(req.body.permiso);
-    let alumno = req.body.alumno;
-    let estudiante = await Alumnos.find({nombre: alumno});
-    let idEstudiante = estudiante[0]._id;
-    let fecha = req.body.fecha;
-    console.log(idEstudiante);
-    let update = await Asistencia.updateOne({idAlumno: idEstudiante, fecha: fecha}, {Permiso: req.body.permiso, Asistencia: req.body.asistencia});
-    console.log(update.matchedCount);
-    console.log(update.modifiedCount);
-    res.send();
+    
+
+    console.log(req.body);
+    let alumno = req.body.id;
+    let alumnos = req.body;
+
+    await alumnos.forEach(async estudiante => {
+        let asistencia = "";
+        if (estudiante.asistio) {
+            asistencia = ".";
+        } else if (estudiante.permiso) {
+            asistencia = "P";
+        } else {
+            asistencia = "SP";
+        }
+        await query("update asistencia set asistencia = ? where id = ?", [asistencia, estudiante.id]);
+    })
+    res.send("");
 });
 
 app.listen(port, () => {
