@@ -26,7 +26,7 @@ let query = util.promisify(connection.query).bind(connection);
 
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/public/index.html");
-});  
+});
 
 app.post("/estudiantes", async (req, res) => {
     // res.send(estudiantes);
