@@ -9,10 +9,10 @@ dotenv.config();
 const port = process.env.PORT || 3000;
 
 const connection = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : '',
-    database : 'asistencia'
+    host     : process.env.host,
+    user     : process.env.user,
+    password : process.env.password,
+    database : process.env.db
   });
 
 connection.connect();
