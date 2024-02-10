@@ -184,14 +184,14 @@ let actualizarAsistencia = () => {
 }
 let btnExportar = document.querySelector(".exportar");
 
-btnExportar.addEventListener("click", () => {
-    let mes = document.querySelector("#mes2").value;
-    fetch("http://localhost:3000/exportarEstudiantes", {
-        method: "post",
-        body: JSON.stringify({mes: mes}),
-        headers: {'Content-Type': 'application/json' }
-    })
-    .then(data => data.json())
-    .then(data => console.log(data))
-})
+// btnExportar.addEventListener("click", () => {
+//     let mes = document.querySelector("#mes2").value;
+//     fetch("http://localhost:3000/exportarEstudiantes", {
+//         method: "post",
+//         body: JSON.stringify({mes: mes}),
+//         headers: {'Content-Type': 'application/json' }
+//     })
+//     .then(data => data.json())
+//     .then(data => console.log(data))
+// })
 btnGuardar.addEventListener("click", actualizarAsistencia)

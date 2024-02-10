@@ -21,6 +21,7 @@ connection.connect();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static(__dirname + "/public"));
+app.use(express.urlencoded({extended: true}))
 
 let query = util.promisify(connection.query).bind(connection);
 
@@ -52,7 +53,7 @@ app.post("/estudiantes", async (req, res) => {
 
 app.post("/exportarEstudiantes", async (req, res) => {
 
-    let mes = req.body.mes;
+    let mes = req.body.mes2;
     
     let workbook = new exceljs.Workbook();
     let exportarexcel = async (edad) => {
@@ -627,15 +628,22 @@ app.post("/exportarEstudiantes", async (req, res) => {
   await exportarexcel(4);
   await exportarexcel(5);
   await exportarexcel(6);
-  workbook.xlsx.writeFile(`asistencia ${mes}.xlsx`);
+  await workbook.xlsx.writeFile(`asistencia ${mes}.xlsx`);
        // await crearExcel(arregloAlumnos4anios, "4 años");
        // await crearExcel(arregloAlumnos5anios, "5 años");
        // await crearExcel(arregloAlumnos6anios, "6 años");
        
-       res.send({
-         ok: true,
-         directorios: "estudiantes"
-        });
+      //  res.send({
+      //    ok: true,
+      //    directorios: "estudiantes"
+      //   });
+
+      res.download(`asistencia ${mes}.xlsx`)
+      // workbook.xlsx.writeBuffer().then((buffer) => {
+      //   // Enviar el archivo como respuesta
+      //   res.attachment(`asistencia${mes}.xlsx`);
+      //   res.send(buffer);
+      // });
       });
 
 app.get("/descargar/:nombre", (req, res) => {

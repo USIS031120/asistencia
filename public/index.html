@@ -155,8 +155,9 @@
             </div>
             <div class="col-md-12">
                 <button class="btn btn-primary guardar">Guardar asistencia</button>
-                <button class="btn btn-primary exportar">Exportar</button>
-                <select id="mes2" class="">
+                <form action="/exportarEstudiantes" method="post">
+                <button class="btn btn-primary exportar" type="submit">Exportar</button>
+                <select id="mes2" name="mes2" class="">
                     <option value="1">Enero</option>
                     <option value="2">Febrero</option>
                     <option value="3">Marzo</option>
@@ -170,6 +171,7 @@
                     <option value="11">Noviembre</option>
                     <option value="12">Diciembre</option>
                 </select>
+            </form>
             </div>
         </div>
     </div>
