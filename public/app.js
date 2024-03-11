@@ -9,7 +9,7 @@ fecha.addEventListener("change", () => {
         return;
     }
     let date = fecha.value;
-    fetch("http://localhost:3000/estudiantes", {
+    fetch("/estudiantes", {
         method: "post",
         body: JSON.stringify({fecha: date}),
         headers:{"Content-Type": "application/json"}
@@ -170,7 +170,7 @@ let actualizarAsistencia = () => {
         datos.push({id, asistio, permiso, sinpermiso})
     })
     
-    fetch("http://localhost:3000/actualizarAsistencia", {
+    fetch("/actualizarAsistencia", {
         method: "post",
         body: JSON.stringify(datos),
         headers: { 'Content-Type': 'application/json' }
