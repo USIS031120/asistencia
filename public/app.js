@@ -30,6 +30,8 @@ let checkAsistencia = (asistencia) => {
     }
     if (asistencia == "p") {
         return "<td><input type='checkbox' class='asistio'></td><td><input type='checkbox' class='permiso' checked></td><td><input type='checkbox' class='sinpermiso'></td>"
+    } else {
+        return "<td><input type='checkbox' class='asistio'></td><td><input type='checkbox' class='permiso'></td><td><input type='checkbox' class='sinpermiso'></td>"
     }
 }
 

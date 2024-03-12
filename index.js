@@ -64,7 +64,7 @@ app.post("/estudiantes", async (req, res) => {
         let result = await query("select * from estudiantes")
                     
         await result.forEach(async estudiante => {
-            await query("insert into asistencia values (null, ?, ?, 'SP')", [estudiante.id, fecha]);
+            await query("insert into asistencia values (null, ?, ?, '')", [estudiante.id, fecha]);
         })
         result = await query("select estudiantes.nombres, estudiantes.apellidos, estudiantes.edad, estudiantes.genero, asistencia.id, asistencia.asistencia from asistencia inner join estudiantes on asistencia.idalumno = estudiantes.id where asistencia.fecha = ? order by estudiantes.edad, estudiantes.apellidos", [fecha])
         res.send({result})
