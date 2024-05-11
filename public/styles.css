@@ -1,0 +1,13 @@
+.inputasistencia {
+    display: inline-block;
+    max-width: 400px;
+    width: 100%;
+}
+
+.select {
+    visibility: hidden;
+}
+
+.select.activo {
+    visibility: visible;
+}
