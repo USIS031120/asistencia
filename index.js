@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const mysql = require("mysql");
 const util = require("util");
+const cors = require("cors");
 dotenv.config();
 const port = process.env.PORT || 3000;
 
@@ -16,6 +17,7 @@ const confg = {
     timeout: 30000
 };
 
+app.use(cors());
 let connection;
 
 
