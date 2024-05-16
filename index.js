@@ -658,7 +658,11 @@ app.post("/exportarEstudiantes", async (req, res) => {
   await exportarexcel(4);
   await exportarexcel(5);
   await exportarexcel(6);
-  await workbook.xlsx.writeFile(`asistencia ${mes}.xlsx`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename=estudiantes ${mes}.xlsx`);
+  await workbook.xlsx.write(res);
+
+  // await workbook.xlsx.writeFile(`asistencia ${mes}.xlsx`);
        // await crearExcel(arregloAlumnos4anios, "4 años");
        // await crearExcel(arregloAlumnos5anios, "5 años");
        // await crearExcel(arregloAlumnos6anios, "6 años");
